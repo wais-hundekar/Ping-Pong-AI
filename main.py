@@ -76,9 +76,9 @@ class Ball:
     def __init__(self, colour):
         self.colour = colour
         self.xSpeed = 8
-        self.ySpeed = self.angle_o_nator(22)
+        self.ySpeed = self.angleFinder(22)
 
-    def angle_o_nator(self, angle):
+    def angleFinder(self, angle):
         C = 90 - angle
         a = (math.sin(math.radians(angle))/ math.sin(math.radians(C))) * self.xSpeed
         return a
@@ -92,68 +92,66 @@ class Ball:
             self.ySpeed = self.ySpeed * -1
     
     def bouncing(self, playerY, side):
+        ballSpeed = 10
         playeroneYCenter = playerY + 50
         ballYCenter = self.y + 8
         sinOfRight = math.sin(math.radians(90))
-        sinOfOther = math.sin(math.radians((playeroneYCenter - ballYCenter) * 1.5))
-        sinOfOtherThings = math.sin(math.radians(90 - (playeroneYCenter - ballYCenter) * 1.5))
-        self.ySpeed = (sinOfOther/ sinOfRight) * ballSpeed
+        sinOfBallToPlayerY = math.sin(math.radians((playeroneYCenter - ballYCenter) * 1.5))
+        sinOfBallToPlayerX = math.sin(math.radians(90 - (playeroneYCenter - ballYCenter) * 1.5))
+        self.ySpeed = (sinOfBallToPlayerY/ sinOfRight) * ballSpeed
         if side == "left":
-            self.xSpeed = abs((sinOfOtherThings/ sinOfRight) * ballSpeed)
+            self.xSpeed = abs((sinOfBallToPlayerX/ sinOfRight) * ballSpeed)
         elif side == "right":
-            self.xSpeed = -1 * abs((sinOfOtherThings/ sinOfRight) * ballSpeed)
+            self.xSpeed = -1 * abs((sinOfBallToPlayerX/ sinOfRight) * ballSpeed)
 
     def drawBall(self):
         pygame.draw.rect(screen, self.colour, pygame.Rect(self.x, self.y, self.width, self.height))
 
 
-ballSpeed = 10
+
 def main(genomes, config):
-    #player1 = Player(20)
-    #player2 = Player(1165)
-    #ball = Ball()
     nets = []
     ge = []
     players = []
     balls = []
-    genomesListThingy = []
-    netsListThiny = []
-    playerListThingy = []
+    genomesList = []
+    netsList = []
+    playersList = []
     rightSide = False
 
     testingBallCollisionTimers = []
     testingBallCollisions = []
 
-    weirdX = 0
+    colourCounter = 0
     for _, g in genomes:
         net = neat.nn.FeedForwardNetwork.create(g, config)
-        #nets.append(net)
-        netsListThiny.append(net)
-        if len(netsListThiny) >= 2:
-            nets.append(netsListThiny)
-            netsListThiny = []
 
-        #players.append([Player(20, colours[weirdX]), Player(1165, colours[weirdX])])
+        netsList.append(net)
+        if len(netsList) >= 2:
+            nets.append(netsList)
+            netsList = []
+
+
         if rightSide == True:
-            playerListThingy.append(Player(1165, colours[weirdX]))
+            playersList.append(Player(1165, colours[colourCounter]))
             rightSide = False
-            balls.append(Ball(colours[weirdX]))
-            weirdX += 1
+            balls.append(Ball(colours[colourCounter]))
+            colourCounter += 1
         elif rightSide == False:
-            playerListThingy.append(Player(20, colours[weirdX]))
+            playersList.append(Player(20, colours[colourCounter]))
             rightSide = True
-        if len(playerListThingy) >= 2:
-            players.append(playerListThingy)
-            playerListThingy = []
+        if len(playersList) >= 2:
+            players.append(playersList)
+            playersList = []
 
         
 
         g.fitness = 0
-        genomesListThingy.append(g)
-        #ge.append(g)
-        if len(genomesListThingy) >= 2:
-            ge.append(genomesListThingy)
-            genomesListThingy = []
+        genomesList.append(g)
+  
+        if len(genomesList) >= 2:
+            ge.append(genomesList)
+            genomesList = []
             
 
 
@@ -164,7 +162,7 @@ def main(genomes, config):
             running = False
             break
 
-        for i, testingBallCollisionTimer in enumerate(testingBallCollisionTimers):
+        for i in range(len(testingBallCollisionTimers)):
             if testingBallCollisions[i] == False and testingBallCollisionTimers[i] == 0:
                 testingBallCollisions[i] = True
             elif testingBallCollisionTimers[i] > 0 and testingBallCollisions[i] == False:
@@ -193,17 +191,15 @@ def main(genomes, config):
                 if paddle.collision(balls[i]):
                     ge[i][x].fitness += 5
                     balls[i].bouncing(paddle.x, paddle.side)
-                    testingBallCollision = False
-                    testingBallCollisionTimer = 60
         
         
 
         screen.fill((0, 0, 0))
 
-        screenYthingy = 5
-        while screenYthingy < screen.get_height():
-            pygame.draw.rect(screen, (255, 255, 255), pygame.Rect(595, screenYthingy, 10, 10))
-            screenYthingy += 20
+        screenYPlace = 5
+        while screenYPlace < screen.get_height():
+            pygame.draw.rect(screen, (255, 255, 255), pygame.Rect(595, screenYPlace, 10, 10))
+            screenYPlace += 20
 
         rem = []
         playerrem = []
@@ -222,8 +218,8 @@ def main(genomes, config):
             players.remove(player)
         for net in netsrem:
             nets.remove(net)
-        for gething in gerem:
-            ge.remove(gething)
+        for soloGe in gerem:
+            ge.remove(soloGe)
 
         for player in players:
             for paddle in player:
@@ -253,7 +249,6 @@ def run(config_path):
     p.add_reporter(neat.StdOutReporter(True))
     stats = neat.StatisticsReporter()
     p.add_reporter(stats)
-    #p.add_reporter(neat.Checkpointer(5))
 
     # Run for up to 50 generations.
     winner = p.run(main, 50)
